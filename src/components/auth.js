@@ -1,10 +1,13 @@
 import {useState} from 'react';
 import { auth } from '../config/firebase';
 import {createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth'
+import { useNavigate } from 'react-router-dom';
 
-export const Auth=() => {
+
+export const Auth=({setIsAuth}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
     const signUp = async() =>{
         try{
@@ -28,6 +31,8 @@ export const Auth=() => {
         try {
           await signInWithEmailAndPassword(auth, email, password);
           alert('Zalogowano');
+          setIsAuth(true);
+          navigate('/');  
         } catch (err) {
           if (err.code === 'auth/user-not-found') {
             alert('Nie znaleziono użytkownika o tym adresie e-mail.');
@@ -54,24 +59,27 @@ export const Auth=() => {
     console.log(auth?.currentUser?.email);
 
    return (
-    <div>
-        <input placeholder="E-mail"
+     <div className="auth-container">
+      <input
+        placeholder="E-mail"
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-         />
+      />
 
-        <input placeholder="Password" 
+      <input
+        placeholder="Hasło"
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        />
-        <button onClick={signUp}>Sign up</button>
-        <button onClick={signIn}>Log in</button>
-        <button onClick={logout}>Logout</button>
-        
+      />
+
+      <div className="auth-buttons">
+        <button onClick={signUp}>Załóż konto</button>
+        <button onClick={signIn}>Zaloguj</button>
+      </div>
     </div>
+
     );
 
 };
-
