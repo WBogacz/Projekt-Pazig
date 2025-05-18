@@ -12,8 +12,6 @@ import './App.css';
 
 function App() {
   const [isAuth, setIsAuth] = useState(null); 
-
- 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuth(!!user);
@@ -22,7 +20,7 @@ function App() {
     return () => unsubscribe(); 
   }, []);
 
-  
+ main
   if (isAuth === null) {
     return <div>Ładowanie...</div>;
   }
