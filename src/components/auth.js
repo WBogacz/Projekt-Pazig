@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import { auth } from '../config/firebase';
-import {createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut} from 'firebase/auth'
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from 'firebase/auth'
 import { useNavigate } from 'react-router-dom';
 
 
@@ -44,17 +44,6 @@ export const Auth=({setIsAuth}) => {
           }
         }
       };
-
-    const logout = async() =>{
-        try{
-            await signOut(auth);
-            alert("Wylogowano.");
-            setEmail('');
-            setPassword('');
-        }catch(err){
-            console.error(err)
-        }
-    };
 
     console.log(auth?.currentUser?.email);
 
