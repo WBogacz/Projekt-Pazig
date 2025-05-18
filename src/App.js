@@ -11,18 +11,18 @@ import Profile from './components/pages/profile';
 import './App.css';
 
 function App() {
-  const [isAuth, setIsAuth] = useState(null); // null = jeszcze nie wiemy, true/false po sprawdzeniu
+  const [isAuth, setIsAuth] = useState(null); 
 
-  // 🔒 Sprawdzamy czy użytkownik jest zalogowany
+ 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuth(!!user); // true jeśli user istnieje
+      setIsAuth(!!user);
     });
 
-    return () => unsubscribe(); // sprzątanie
+    return () => unsubscribe(); 
   }, []);
 
-  // 🕒 Dopóki nie wiemy, czy zalogowany – nic nie renderujemy (możesz tu dać spinner)
+  
   if (isAuth === null) {
     return <div>Ładowanie...</div>;
   }
