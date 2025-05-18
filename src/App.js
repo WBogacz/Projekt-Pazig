@@ -12,15 +12,15 @@ import './App.css';
 
 function App() {
   const [isAuth, setIsAuth] = useState(null); 
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsAuth(!!user); 
+      setIsAuth(!!user);
     });
 
     return () => unsubscribe(); 
   }, []);
 
+ main
   if (isAuth === null) {
     return <div>Ładowanie...</div>;
   }
