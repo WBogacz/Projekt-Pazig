@@ -102,7 +102,7 @@
   
   .home-container {
     display: flex;
-    height: 100vh; /* wysokość na całą stronę */
+    height: 100vh; 
     background-color: #faf4f4;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
@@ -213,8 +213,8 @@
   .form-section {
     display: flex;
     flex-direction: column;
-    gap: 12px; /* odstęp między polami */
-    max-width: 300px; /* np. ogranicz szerokość */
+    gap: 12px; 
+    max-width: 300px;
     margin-top: 10px;
   }
   
