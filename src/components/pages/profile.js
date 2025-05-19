@@ -14,7 +14,6 @@ const Profile = ({ setIsAuth }) => {
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
-      // Jeśli chcesz, możesz pobrać displayName z usera
       setNickname(user.displayName || user.email || "Użytkownik");
     }
   }, []);
@@ -46,8 +45,8 @@ const Profile = ({ setIsAuth }) => {
 
   const handleLogout = async () => {
     try {
-      await auth.signOut(); // wyloguj użytkownika w Firebase
-      setIsAuth(false); // ustaw stan w aplikacji
+      await auth.signOut(); 
+      setIsAuth(false); 
       alert("Wylogowano.");
       navigate("/login");
     } catch (error) {
@@ -77,7 +76,7 @@ const Profile = ({ setIsAuth }) => {
       <main className="content">
         <h2>Profil</h2>
 
-        {/* Tutaj dodajemy zdjęcie */}
+        {}
         <img
           src={profileImg}
           alt="Profil"

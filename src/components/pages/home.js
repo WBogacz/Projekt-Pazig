@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { db, auth } from "../../config/firebase";
 import "../styles/home.css";
 
@@ -9,22 +9,59 @@ const Home = ({ setIsAuth }) => {
   const [chest, setChest] = useState("");
   const [weight, setWeight] = useState("");
   const [nickname, setNickname] = useState("");
+  const [measurements, setMeasurements] = useState([]);
+  const [targetWeight, setTargetWeight] = useState(null);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
       setNickname(user.displayName || user.email || "Użytkownik");
+      getMeasurements(user.uid);
+      getTarget(user.uid);
+
     }
   }, []);
 
+ const getMeasurements = async (userId) => {
+    try {
+      const q = query(
+        collection(db, "circumference"),
+        where("user_id", "==", userId)
+      );
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort(
+          (a, b) => new Date(b.date.toDate()) - new Date(a.date.toDate())
+        );
+      setMeasurements(data);
+    } catch (error) {
+      console.error("Błąd pobierania pomiarów:", error);
+    }
+  };
+
+  const getTarget = async (userId) => {
+    try {
+      const q = query(
+        collection(db, "progress"),
+        where("user_id", "==", userId)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const last = snapshot.docs[snapshot.docs.length - 1].data();
+        setTargetWeight(last.target_weight);
+      }
+    } catch (error) {
+      console.error("Błąd pobierania celu:", error);
+    }
+  };
+
+
   const handleSubmit = async () => {
     const user = auth.currentUser;
-    if (!user) {
-      alert("Musisz być zalogowany, aby zapisać dane.");
-      return;
-    }
-
+    if (!user) return;
     try {
       await addDoc(collection(db, "circumference"), {
         user_id: user.uid,
@@ -55,6 +92,23 @@ const Home = ({ setIsAuth }) => {
     }
   };
 
+  const startWeight = measurements.length > 0
+    ? measurements[measurements.length - 1].weight
+    : null;
+
+  const latestWeight = measurements.length > 0
+    ? measurements[0].weight
+    : null;
+
+  let weightProgress = null;
+  let weightRemaining = null;
+  if (startWeight !== null && targetWeight !== null && latestWeight !== null) {
+    const totalToLose = startWeight - targetWeight;
+    const lost = startWeight - latestWeight;
+    weightProgress = Math.min(100, Math.max(0, ((lost / totalToLose) * 100).toFixed(1)));
+    weightRemaining = (latestWeight - targetWeight).toFixed(1);
+
+  }
   return (
     <div className="home-container">
       <aside className="sidebar">
@@ -108,6 +162,12 @@ const Home = ({ setIsAuth }) => {
             </button>
           </div>
         </div>
+        {weightProgress !== null && (
+          <div className="progress-display">
+            <h3>Postęp wagi: {weightProgress}%</h3>
+            <p>Pozostało do celu: {weightRemaining} kg</p>
+          </div>
+        )}
       </main>
     </div>
   );

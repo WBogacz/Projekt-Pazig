@@ -1,4 +1,3 @@
-// src/components/AddTestData.js
 import React from "react";
 import { collection, addDoc } from "firebase/firestore";
 import { db, auth } from "../config/firebase";

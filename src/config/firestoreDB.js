@@ -1,4 +1,3 @@
-// src/services/firestoreService.js
 import { db, auth } from "firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 
