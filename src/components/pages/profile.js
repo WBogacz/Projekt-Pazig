@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../../config/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import profileImg from "../pages/profil.png";
@@ -8,6 +8,7 @@ const Profile = ({ setIsAuth }) => {
   const [targetWaist, setTargetWaist] = useState("");
   const [targetChest, setTargetChest] = useState("");
   const [targetWeight, setTargetWeight] = useState("");
+  const [currentTargetWeight, setCurrentTargetWeight] = useState(null);
   const [nickname, setNickname] = useState("");
   const navigate = useNavigate();
 
@@ -15,6 +16,27 @@ const Profile = ({ setIsAuth }) => {
     const user = auth.currentUser;
     if (user) {
       setNickname(user.displayName || user.email || "Użytkownik");
+
+      const q = query(
+        collection(db, "progress"),
+        where("user_id", "==", user.uid)
+      );
+
+      getDocs(q)
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            const latest = snapshot.docs
+              .map(doc => doc.data())
+              .sort((a, b) => new Date(b.date.toDate()) - new Date(a.date.toDate()))[0];
+
+            if (latest.target_weight) {
+              setCurrentTargetWeight(latest.target_weight);
+            }
+          }
+        })
+        .catch(error => {
+          console.error("Błąd pobierania celu:", error);
+        });
     }
   }, []);
 
@@ -37,6 +59,8 @@ const Profile = ({ setIsAuth }) => {
       setTargetWaist("");
       setTargetChest("");
       setTargetWeight("");
+
+      setCurrentTargetWeight(parseFloat(targetWeight));
     } catch (error) {
       console.error("Błąd zapisu celu:", error);
       alert("Coś poszło nie tak przy zapisie danych.");
@@ -60,23 +84,18 @@ const Profile = ({ setIsAuth }) => {
       <aside className="sidebar">
         <div className="profile-icon" />
         <p className="nickname">{nickname}</p>
-        <nav className="menu">
-          <ul>
-            <li><Link to="/">Strona Główna</Link></li>
-            <li><Link to="/Charts">Wykresy</Link></li>
-            <li><Link to="/Profile">Profil</Link></li>
-            <li>
-              <button onClick={handleLogout}>Wyloguj</button>
-            </li>
-          </ul>
-        </nav>
+        <div className="menu">
+          <Link to="/" className="menu-item">Strona Główna</Link>
+          <Link to="/Charts" className="menu-item">Wykresy</Link>
+          <Link to="/Profile" className="menu-item">Profil</Link>
+          <button className="menu-item" onClick={handleLogout}>Wyloguj</button>
+        </div>
         <button className="pdf-button">Generuj PDFa</button>
       </aside>
 
       <main className="content">
         <h2>Profil</h2>
 
-        {}
         <img
           src={profileImg}
           alt="Profil"
@@ -93,6 +112,12 @@ const Profile = ({ setIsAuth }) => {
             onChange={(e) => setTargetWeight(e.target.value)}
             className="input-box"
           />
+
+          {currentTargetWeight !== null && (
+            <p style={{ marginTop: "8px", fontSize: "14px", color: "#555" }}>
+              Aktualna docelowa waga: <strong>{currentTargetWeight} kg</strong>
+            </p>
+          )}
 
           <div className="button-row">
             <button className="confirm-button" onClick={handleSubmit}>

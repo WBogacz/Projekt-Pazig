@@ -20,11 +20,10 @@ const Home = ({ setIsAuth }) => {
       setNickname(user.displayName || user.email || "Użytkownik");
       getMeasurements(user.uid);
       getTarget(user.uid);
-
     }
   }, []);
 
- const getMeasurements = async (userId) => {
+  const getMeasurements = async (userId) => {
     try {
       const q = query(
         collection(db, "circumference"),
@@ -50,14 +49,31 @@ const Home = ({ setIsAuth }) => {
       );
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
-        const last = snapshot.docs[snapshot.docs.length - 1].data();
-        setTargetWeight(last.target_weight);
+        const allData = snapshot.docs.map(doc => doc.data());
+        const sorted = allData.sort(
+          (a, b) => new Date(b.date.toDate()) - new Date(a.date.toDate())
+        );
+        const latest = sorted[0];
+
+        if (latest.target_weight) {
+          setTargetWeight(latest.target_weight);
+        }
       }
     } catch (error) {
       console.error("Błąd pobierania celu:", error);
     }
   };
 
+
+  const formatDecimalInput = (value) => {
+    let val = value.replace(/[^\d.,]/g, "");
+    val = val.replace(/,/g, ".");
+    const parts = val.split(".");
+    if (parts.length > 2) {
+      val = parts[0] + "." + parts.slice(1).join("");
+    }
+    return val;
+  };
 
   const handleSubmit = async () => {
     const user = auth.currentUser;
@@ -70,7 +86,10 @@ const Home = ({ setIsAuth }) => {
         weight: parseFloat(weight),
         date: new Date(),
       });
-      alert("Dane zapisane pomyślnie!");
+
+      await getMeasurements(user.uid);
+      await getTarget(user.uid);
+
       setWaist("");
       setChest("");
       setWeight("");
@@ -107,21 +126,25 @@ const Home = ({ setIsAuth }) => {
     const lost = startWeight - latestWeight;
     weightProgress = Math.min(100, Math.max(0, ((lost / totalToLose) * 100).toFixed(1)));
     weightRemaining = (latestWeight - targetWeight).toFixed(1);
-
   }
+
+  const getProgressColor = (progress) => {
+    if (progress < 50) return "#f87171";
+    if (progress < 80) return "#fbbf24";
+    return "#34d399";
+  };
+
   return (
     <div className="home-container">
       <aside className="sidebar">
         <div className="profile-icon" />
         <p className="nickname">{nickname}</p>
-        <nav className="menu">
-          <ul>
-            <li><Link to="/">Strona Główna</Link></li>
-            <li><Link to="/Charts">Wykresy</Link></li>
-            <li><Link to="/Profile">Profil</Link></li>
-            <li><button onClick={handleLogout}>Wyloguj</button></li>
-          </ul>
-        </nav>
+        <div className="menu">
+          <Link to="/" className="menu-item">Strona Główna</Link>
+          <Link to="/Charts" className="menu-item">Wykresy</Link>
+          <Link to="/Profile" className="menu-item">Profil</Link>
+          <button className="menu-item" onClick={handleLogout}>Wyloguj</button>
+        </div>
         <button className="pdf-button">Generuj PDFa</button>
       </aside>
 
@@ -131,28 +154,31 @@ const Home = ({ setIsAuth }) => {
         <div className="form-section">
           <label>Obwód klatki piersiowej (cm)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             placeholder="cm"
             value={chest}
-            onChange={(e) => setChest(e.target.value)}
+            onChange={(e) => setChest(formatDecimalInput(e.target.value))}
             className="input-box"
           />
 
           <label>Obwód w pasie (cm)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             placeholder="cm"
             value={waist}
-            onChange={(e) => setWaist(e.target.value)}
+            onChange={(e) => setWaist(formatDecimalInput(e.target.value))}
             className="input-box"
           />
 
           <label>Waga (kg)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             placeholder="kg"
             value={weight}
-            onChange={(e) => setWeight(e.target.value)}
+            onChange={(e) => setWeight(formatDecimalInput(e.target.value))}
             className="input-box"
           />
 
@@ -164,10 +190,20 @@ const Home = ({ setIsAuth }) => {
         </div>
         {weightProgress !== null && (
           <div className="progress-display">
-            <h3>Postęp wagi: {weightProgress}%</h3>
+            <div className="progress-bar-container">
+              <div
+                className="progress-bar-fill"
+                style={{
+                  width: `${weightProgress}%`,
+                  backgroundColor: getProgressColor(weightProgress),
+                }}
+              />
+            </div>
+            <h3 style={{ marginTop: "10px" }}>Postęp: {weightProgress}%</h3>
             <p>Pozostało do celu: {weightRemaining} kg</p>
           </div>
         )}
+
       </main>
     </div>
   );
